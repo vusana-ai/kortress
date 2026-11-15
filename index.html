@@ -285,14 +285,19 @@
                 </div>
             </div>
 
-            <!-- 중앙: 파워 게이지 바 -->
+            <!-- 중앙: 파워 게이지 바 + VIP 정밀 조준 추천 -->
             <div class="w-full md:flex-1 max-w-md flex flex-col gap-0.5">
-                <div class="flex justify-between text-[10px] font-bold px-1">
-                    <span class="text-slate-400">SHOT POWER</span>
-                    <span id="power-text" class="font-mono text-amber-400">0%</span>
+                <div class="flex justify-between items-center text-[10px] font-bold px-1 gap-2">
+                    <span class="text-slate-400 shrink-0">SHOT POWER</span>
+                    <button id="vip-assist-badge" type="button" title="클릭하면 추천 각도로 자동 정렬됩니다"
+                        class="hidden px-2 py-0.5 rounded-full bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/60 text-amber-300 text-[10px] font-black truncate transition cursor-pointer">
+                        👑 VIP 조준: 계산중...
+                    </button>
+                    <span id="power-text" class="font-mono text-amber-400 shrink-0">0%</span>
                 </div>
                 <div id="power-container" class="w-full h-4 bg-slate-950 rounded-full p-0.5 border border-slate-600 relative overflow-hidden">
                     <div id="last-power-marker" class="hidden absolute top-0 bottom-0 w-0.5 bg-white/70 z-10" style="left: 0%;"></div>
+                    <div id="vip-power-marker" class="hidden absolute top-0 bottom-0 w-1 bg-yellow-300 shadow-[0_0_8px_#fde047] z-20" style="left: 0%;"></div>
                     <div id="power-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-600 transition-none" style="width: 0%;"></div>
                 </div>
             </div>
@@ -465,6 +470,7 @@
 
             if (authState.isVip) vipBadge.classList.remove('hidden');
             else vipBadge.classList.add('hidden');
+            if (typeof updateVipAssistUI === 'function') updateVipAssistUI();
         }
 
         async function restoreAuthSession() {
@@ -1590,8 +1596,114 @@
             } else {
                 marker.classList.add('hidden');
             }
+            updateVipAssistUI();
             updatePowerBar();
         }
+
+        let currentVipSolution = null;
+
+        function calculateVipSolution(shooter, target) {
+            if (!shooter || !target || target.hp <= 0) return null;
+            const toRight = target.x >= shooter.x;
+            const angleMin = toRight ? 15 : 100;
+            const angleMax = toRight ? 80 : 165;
+
+            let best = null;
+            let minDist = Infinity;
+
+            const simulate = (angleDeg, powerPct) => {
+                const rad = (-angleDeg * Math.PI) / 180;
+                const speed = (powerPct / 100) * MAX_POWER;
+                let sx = shooter.x + Math.cos(rad) * 30;
+                let sy = (shooter.y - 13) + Math.sin(rad) * 30;
+                let vx = Math.cos(rad) * speed;
+                let vy = Math.sin(rad) * speed;
+
+                for (let frame = 0; frame < 220; frame++) {
+                    vx += gameState.wind * 0.012;
+                    vy += GRAVITY;
+                    for (let s = 0; s < 4; s++) {
+                        sx += vx / 4;
+                        sy += vy / 4;
+                        if (sx < 0 || sx >= WORLD_WIDTH) return Infinity;
+                        const dTank = Math.hypot(sx - target.x, sy - (target.y - 11));
+                        if (dTank < 16) return 0;
+                        const ix = Math.floor(sx);
+                        if (ix >= 0 && ix < WORLD_WIDTH && sy >= gameState.terrain[ix]) {
+                            return Math.hypot(sx - target.x, sy - (target.y - 11));
+                        }
+                    }
+                }
+                return Infinity;
+            };
+
+            // 1차 광역 탐색
+            for (let a = angleMin; a <= angleMax; a += 3) {
+                for (let p = 15; p <= 100; p += 2) {
+                    const d = simulate(a, p);
+                    if (d < minDist) {
+                        minDist = d;
+                        best = { angle: a, power: p };
+                        if (d === 0) break;
+                    }
+                }
+                if (minDist === 0) break;
+            }
+
+            // 2차 정밀 보정
+            if (best) {
+                const baseA = best.angle;
+                const baseP = best.power;
+                for (let a = Math.max(0, baseA - 3); a <= Math.min(180, baseA + 3); a += 1) {
+                    for (let p = Math.max(5, baseP - 2); p <= Math.min(100, baseP + 2); p += 1) {
+                        const d = simulate(a, p);
+                        if (d < minDist) {
+                            minDist = d;
+                            best = { angle: a, power: p };
+                        }
+                    }
+                }
+            }
+            return best;
+        }
+
+        function updateVipAssistUI() {
+            const badge = document.getElementById('vip-assist-badge');
+            const vipMarker = document.getElementById('vip-power-marker');
+            if (!badge || !vipMarker) return;
+
+            const active = gameState.tanks[gameState.turn];
+            const opponent = gameState.tanks[(gameState.turn + 1) % 2];
+            const showAssist = authState.isVip && active && !active.isAI && opponent && opponent.hp > 0 && (gameState.phase === 'AIMING' || gameState.phase === 'CHARGING');
+
+            if (!showAssist) {
+                badge.classList.add('hidden');
+                vipMarker.classList.add('hidden');
+                currentVipSolution = null;
+                return;
+            }
+
+            currentVipSolution = calculateVipSolution(active, opponent);
+            if (currentVipSolution) {
+                badge.textContent = `👑 VIP 조준: ${currentVipSolution.angle}° · ${currentVipSolution.power}%`;
+                badge.classList.remove('hidden');
+                vipMarker.style.left = `${currentVipSolution.power}%`;
+                vipMarker.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                vipMarker.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('vip-assist-badge').addEventListener('click', () => {
+            if (!authState.isVip || !currentVipSolution || gameState.phase !== 'AIMING') return;
+            const active = gameState.tanks[gameState.turn];
+            if (!active || active.isAI) return;
+            active.angle = currentVipSolution.angle;
+            active.facing = active.angle < 90 ? 1 : -1;
+            updateHUD();
+            showToast(`👑 각도 ${currentVipSolution.angle}° 맞춤 완료! 파워 ${currentVipSolution.power}% 눈금에서 발사하세요!`);
+        });
 
         function updatePowerBar() {
             const p = Math.round(gameState.power);
