@@ -203,18 +203,18 @@
         </div>
 
         <!-- 통합 계정 로그인 모달 -->
-        <div id="authModal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-            <div class="w-full max-w-xs bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 shadow-2xl text-center">
+        <div id="authModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div class="w-full max-w-xs mx-auto bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 shadow-2xl text-center">
                 <div class="w-11 h-11 mx-auto mb-2 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-xl">
                     🔐
                 </div>
                 <h3 class="text-base font-black text-amber-300 mb-3">AI게임장 통합 계정</h3>
 
                 <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-3">
-                    <button type="button" id="modeLoginBtn" class="flex-1 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer">
+                    <button type="button" id="modeLoginBtn" class="flex-1 min-w-0 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer">
                         기존 계정 로그인
                     </button>
-                    <button type="button" id="modeRegisterBtn" class="flex-1 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-slate-200 transition cursor-pointer">
+                    <button type="button" id="modeRegisterBtn" class="flex-1 min-w-0 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-slate-200 transition cursor-pointer">
                         간편 회원가입
                     </button>
                 </div>
@@ -222,14 +222,14 @@
                 <div class="space-y-2.5 text-left">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 ml-1">휴대폰 번호 (010 제외 8자리)</label>
-                        <div class="flex items-center gap-1.5 mt-1">
-                            <span class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-black text-amber-400">010-</span>
-                            <input id="phoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="1234-5678" class="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-wider focus:outline-none focus:border-amber-400" />
+                        <div class="flex items-center gap-1.5 mt-1 w-full">
+                            <span class="px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-black text-amber-400 shrink-0">010-</span>
+                            <input id="phoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="1234-5678" class="flex-1 min-w-0 w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-wider focus:outline-none focus:border-amber-400" />
                         </div>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 ml-1">비밀번호 (숫자 4자리)</label>
-                        <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="w-full mt-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-widest text-center focus:outline-none focus:border-amber-400" />
+                        <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="w-full min-w-0 mt-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-widest text-center focus:outline-none focus:border-amber-400" />
                     </div>
                 </div>
 
@@ -297,7 +297,7 @@
                 </div>
                 <div id="power-container" class="w-full h-4 bg-slate-950 rounded-full p-0.5 border border-slate-600 relative overflow-hidden">
                     <div id="last-power-marker" class="hidden absolute top-0 bottom-0 w-0.5 bg-white/70 z-10" style="left: 0%;"></div>
-                    <div id="vip-power-marker" class="hidden absolute top-0 bottom-0 w-1 bg-yellow-300 shadow-[0_0_8px_#fde047] z-20" style="left: 0%;"></div>
+                    <div id="vip-power-marker" class="hidden absolute top-0 bottom-0 w-1.5 -translate-x-1/2 bg-yellow-300 border-x border-amber-950/60 shadow-[0_0_10px_#fde047] z-20" style="left: 0%;"></div>
                     <div id="power-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-600 transition-none" style="width: 0%;"></div>
                 </div>
             </div>
@@ -1159,19 +1159,23 @@
             activeTank.fuel = MAX_FUEL;
             gameState.power = 0;
 
-            if (Math.random() < 0.75) {
-                randomizeWind();
-                showToast(`바람이 변경되었습니다! (${gameState.wind > 0 ? '→ ' + gameState.wind : (gameState.wind < 0 ? '← ' + Math.abs(gameState.wind) : '무풍')})`);
-            }
-            updateHUD();
-
             if (activeTank.isAI) {
                 gameState.phase = 'AI_THINKING';
                 setControlsEnabled(false);
+                if (Math.random() < 0.75) {
+                    randomizeWind();
+                    showToast(`바람이 변경되었습니다! (${gameState.wind > 0 ? '→ ' + gameState.wind : (gameState.wind < 0 ? '← ' + Math.abs(gameState.wind) : '무풍')})`);
+                }
+                updateHUD();
                 setTimeout(executeAITurn, 900);
             } else {
                 gameState.phase = 'AIMING';
                 setControlsEnabled(true);
+                if (Math.random() < 0.75) {
+                    randomizeWind();
+                    showToast(`바람이 변경되었습니다! (${gameState.wind > 0 ? '→ ' + gameState.wind : (gameState.wind < 0 ? '← ' + Math.abs(gameState.wind) : '무풍')})`);
+                }
+                updateHUD();
             }
         }
 
@@ -1687,7 +1691,7 @@
             if (currentVipSolution) {
                 badge.textContent = `👑 VIP 조준: ${currentVipSolution.angle}° · ${currentVipSolution.power}%`;
                 badge.classList.remove('hidden');
-                vipMarker.style.left = `${currentVipSolution.power}%`;
+                vipMarker.style.left = `${Math.max(2, Math.min(98, currentVipSolution.power))}%`;
                 vipMarker.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
