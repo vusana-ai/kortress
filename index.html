@@ -413,7 +413,7 @@
             ? ['']
             : ['https://02826k.duckdns.org', 'https://partial-catering-vatican-accounting.trycloudflare.com'];
         let API_BASE_URL = API_CANDIDATES[0];
-        const ADMIN_VIP_PHONES = ['010-9485-0928'];
+        const ADMIN_VIP_PHONES = []; // VIP 여부는 서버 DB에서 관리
         const TOKEN_KEY = 'hero_clicker_jwt_token';
         const USER_KEY = 'hero_clicker_username';
         const LOCAL_WIN_KEY = 'kortress_wins_v1';
@@ -487,7 +487,7 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 authState.serverSaveData = data.saveData || {};
-                authState.isVip = Boolean(authState.serverSaveData.isVip || isAdminAccount(authState.username));
+                authState.isVip = Boolean(data.isVip || authState.serverSaveData.isVip || isAdminAccount(authState.username));
                 if (authState.serverSaveData.kortressWins) {
                     authState.wins = Math.max(authState.wins, authState.serverSaveData.kortressWins);
                     localStorage.setItem(LOCAL_WIN_KEY, String(authState.wins));
@@ -599,7 +599,7 @@
                 authState.token = result.token;
                 authState.username = result.username || fullPhoneId;
                 authState.serverSaveData = result.saveData || {};
-                authState.isVip = Boolean(authState.serverSaveData.isVip || isAdminAccount(authState.username));
+                authState.isVip = Boolean(result.isVip || authState.serverSaveData.isVip || isAdminAccount(authState.username));
                 localStorage.setItem(TOKEN_KEY, authState.token);
                 localStorage.setItem(USER_KEY, authState.username);
                 authModal.classList.add('hidden');
