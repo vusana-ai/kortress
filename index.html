@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f172a" />
     <link rel="icon" type="image/png" href="./icon.png" />
+    <link rel="apple-touch-icon" href="./icon.png" />
     <link rel="manifest" href="./manifest.json" />
     <title>코트리스 — KORTRESS 2D</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -323,10 +324,10 @@
         <div class="max-w-5xl w-full mx-auto bg-gradient-to-br from-slate-950 to-amber-950/30 border border-amber-500/35 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 min-w-0">
                 <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-base shrink-0 overflow-hidden">
-                    <img src="./icon.png" alt="AI게임장" class="w-full h-full object-cover" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='./icon.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='inline';}" />
+                    <img src="./icon.png" alt="코트리스" class="w-full h-full object-cover" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='./icon.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='inline';}" />
                     <span style="display:none">📲</span>
                 </div>
-                <div class="text-xs sm:text-sm font-black text-amber-300 truncate">AI게임장 바로가기</div>
+                <div class="text-xs sm:text-sm font-black text-amber-300 truncate">코트리스 바로가기</div>
             </div>
             <button id="androidInstallBtn" type="button"
                 class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-black text-xs shadow-md transition shrink-0 cursor-pointer">
@@ -362,7 +363,7 @@
         window.addEventListener('appinstalled', () => {
             deferredInstallPrompt = null;
             installBtnText.textContent = '바탕화면 아이콘 생성 완료!';
-            showToast('📲 바탕화면에 [AI게임장] 아이콘이 생성되었습니다!');
+            showToast('📲 바탕화면에 [코트리스] 아이콘이 생성되었습니다!');
         });
 
         installBtn.addEventListener('click', async () => {
@@ -382,17 +383,17 @@
             const isInApp = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line|wv\)/i.test(ua);
 
             if (!isMobile) {
-                const targetUrl = 'https://link.inpock.co.kr/aigame';
+                const targetUrl = location.href;
                 const urlContent = '[InternetShortcut]\r\nURL=' + targetUrl + '\r\n';
                 const blob = new Blob([urlContent], { type: 'text/plain;charset=utf-8' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'AI게임장_바로가기.url';
+                a.download = '코트리스_바로가기.url';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(a.href);
-                showToast('💻 윈도우용 [AI게임장_바로가기.url]이 다운로드되었습니다!');
+                showToast('💻 윈도우용 [코트리스_바로가기.url]이 다운로드되었습니다!');
             } else if (isAndroid && isInApp) {
                 const cleanUrl = window.location.href.split('#')[0].replace(/^https?:\/\//, '');
                 showToast('📲 인앱 브라우저에서는 설치가 제한되어 Chrome으로 이동합니다...');
